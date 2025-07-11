@@ -19,6 +19,7 @@ class WhatsAppService
         $this->phoneNumberId =  "571263062741961";
         $this->version = "v22.0";
         $this->baseUrl = "https://graph.facebook.com";
+        $this->businessAccountId = env('WHATSAPP_BUSINESS_ACCOUNT_ID', '552281194323457');
     }
     public function sendMessage(string $to, string $message): array
     {
@@ -220,19 +221,22 @@ class WhatsAppService
         $url = "{$this->baseUrl}/{$this->version}/{$this->phoneNumberId}/messages";
 
         try {
+            $templateName = config('whatsapp.facturation_template_name', 'facturation');
+
             $publicDocumentUrl = $documentUrl;
             if (!filter_var($documentUrl, FILTER_VALIDATE_URL)) {
                 $relativePath = str_replace(storage_path('app/public/'), '', $documentUrl);
                 $publicDocumentUrl = asset('storage/' . $relativePath);
             }
 
+            // Structure corrigée du payload
             $payload = [
                 'messaging_product' => 'whatsapp',
                 'recipient_type' => 'individual',
                 'to' => $to,
                 'type' => 'template',
                 'template' => [
-                    'name' => config('whatsapp.facturation_template_name'),
+                    'name' => $templateName,
                     'language' => [
                         'code' => 'fr'
                     ],
@@ -294,16 +298,17 @@ class WhatsAppService
         }
     }
 
-
     public function getTemplates(): array
     {
         try {
-            $url = "{$this->baseUrl}/{$this->version}/{$this->phoneNumberId}/message_templates";
+            // Utiliser le Business Account ID au lieu du Phone Number ID
+            $url = "{$this->baseUrl}/{$this->version}/{$this->businessAccountId}/message_templates";
 
             $response = Http::withToken($this->token)->get($url);
 
             if (!$response->successful()) {
                 Log::error('WhatsApp Get Templates Error', [
+                    'url' => $url,
                     'response' => $response->json()
                 ]);
                 return ['error' => 'Erreur lors de la récupération des templates'];
