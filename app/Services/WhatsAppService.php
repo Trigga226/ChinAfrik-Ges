@@ -226,59 +226,52 @@ class WhatsAppService
                 'montant' => $montant
             ]);
 
-            $responses = [];
             $url = "{$this->baseUrl}/{$this->version}/{$this->phoneNumberId}/messages";
+            $templateName = 'facturation'; // Le nom du template
 
-            // IMPORTANT: Remplacez 'versement_notification' par le nom exact de votre template
-            $templateName = 'facturation'; // ← CHANGEZ CECI
-
-            // Format du numéro
+            // Format du numéro et préparation de l'URL du document
             $formattedPhone = $this->formatPhoneNumber($to);
-
-            // Préparer l'URL du document
             $publicDocumentUrl = $this->prepareDocumentUrl($documentUrl);
-            $documentAccessible = $this->isUrlAccessible($publicDocumentUrl);
+
+            // Vérifier si l'URL du document est accessible
+            if (!$this->isUrlAccessible($publicDocumentUrl)) {
+                throw new \Exception("Document non accessible à l'URL : {$publicDocumentUrl}");
+            }
 
             Log::info('Préparation envoi', [
                 'template_name' => $templateName,
                 'formatted_phone' => $formattedPhone,
                 'document_url' => $publicDocumentUrl,
-                'document_accessible' => $documentAccessible
             ]);
 
-            // 1. Envoyer le document d'abord si accessible
-            if ($documentAccessible) {
-                $documentPayload = [
-                    'messaging_product' => 'whatsapp',
-                    'recipient_type' => 'individual',
-                    'to' => $formattedPhone,
-                    'type' => 'document',
-                    'document' => [
-                        'link' => $publicDocumentUrl,
-                        'caption' => "📄 Document de versement",
-                        'filename' => $documentName
+            // Construire les composants du template
+            $components = [];
+
+            // 1. Composant Header (Document)
+            $components[] = [
+                'type' => 'header',
+                'parameters' => [
+                    [
+                        'type' => 'document',
+                        'document' => [
+                            'link' => $publicDocumentUrl,
+                            'filename' => $documentName
+                        ]
                     ]
-                ];
+                ]
+            ];
 
-                Log::info('Envoi document - Payload', $documentPayload);
+            // 2. Composant Body
+            $components[] = [
+                'type' => 'body',
+                'parameters' => [
+                    ['type' => 'text', 'text' => $nomclient],
+                    ['type' => 'text', 'text' => $motif],
+                    ['type' => 'text', 'text' => $montant]
+                ]
+            ];
 
-                $documentResponse = Http::withToken($this->token)
-                    ->timeout(30)
-                    ->post($url, $documentPayload);
-
-                $responses['document'] = $documentResponse->json();
-
-                Log::info('Envoi document - Réponse', [
-                    'status' => $documentResponse->status(),
-                    'response' => $responses['document']
-                ]);
-
-                if ($documentResponse->successful()) {
-                    sleep(3); // Attendre entre les messages
-                }
-            }
-
-            // 2. Envoyer le message avec template
+            // Préparer le payload final
             $templatePayload = [
                 'messaging_product' => 'whatsapp',
                 'recipient_type' => 'individual',
@@ -286,55 +279,34 @@ class WhatsAppService
                 'type' => 'template',
                 'template' => [
                     'name' => $templateName,
-                    'language' => [
-                        'code' => 'fr'
-                    ],
-                    'components' => [
-                        [
-                            'type' => 'body',
-                            'parameters' => [
-                                [
-                                    'type' => 'text',
-                                    'text' => $nomclient
-                                ],
-                                [
-                                    'type' => 'text',
-                                    'text' => $motif
-                                ],
-                                [
-                                    'type' => 'text',
-                                    'text' => $montant
-                                ]
-                            ]
-                        ]
-                    ]
+                    'language' => ['code' => 'fr'],
+                    'components' => $components
                 ]
             ];
 
             Log::info('Envoi template - Payload', $templatePayload);
 
-            $templateResponse = Http::withToken($this->token)
+            // Envoyer la requête
+            $response = Http::withToken($this->token)
                 ->timeout(30)
                 ->post($url, $templatePayload);
 
-            $responses['template'] = $templateResponse->json();
+            $result = $response->json();
 
             Log::info('Envoi template - Réponse', [
-                'status' => $templateResponse->status(),
-                'response' => $responses['template']
+                'status' => $response->status(),
+                'response' => $result
             ]);
 
-            // Vérifier les erreurs
-            if (!$templateResponse->successful()) {
-                $error = $responses['template']['error'] ?? [];
+            // Gérer les erreurs
+            if (!$response->successful()) {
+                $error = $result['error'] ?? [];
                 Log::error('Erreur envoi template', [
-                    'status' => $templateResponse->status(),
+                    'status' => $response->status(),
                     'error' => $error
                 ]);
-
                 throw new \Exception(
-                    "Erreur template WhatsApp: " .
-                    ($error['message'] ?? 'Erreur inconnue') .
+                    "Erreur template WhatsApp: " . ($error['message'] ?? 'Erreur inconnue') .
                     " (Code: " . ($error['code'] ?? 'N/A') . ")"
                 );
             }
@@ -342,15 +314,12 @@ class WhatsAppService
             Log::info('=== NOTIFICATION TEMPLATE ENVOYÉE AVEC SUCCÈS ===', [
                 'to' => $formattedPhone,
                 'template_name' => $templateName,
-                'message_ids' => [
-                    'document' => $responses['document']['messages'][0]['id'] ?? null,
-                    'template' => $responses['template']['messages'][0]['id'] ?? null
-                ]
+                'message_id' => $result['messages'][0]['id'] ?? null
             ]);
 
             return [
                 'success' => true,
-                'responses' => $responses,
+                'response' => $result,
                 'message' => 'Notification envoyée avec succès'
             ];
 
