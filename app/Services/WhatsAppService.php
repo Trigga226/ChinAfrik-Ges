@@ -221,83 +221,172 @@ class WhatsAppService
         $url = "{$this->baseUrl}/{$this->version}/{$this->phoneNumberId}/messages";
 
         try {
+            // Vérifier que le template existe
             $templateName = config('whatsapp.facturation_template_name', 'facturation');
 
-            $publicDocumentUrl = $documentUrl;
-            if (!filter_var($documentUrl, FILTER_VALIDATE_URL)) {
-                $relativePath = str_replace(storage_path('app/public/'), '', $documentUrl);
-                $publicDocumentUrl = asset('storage/' . $relativePath);
+            // Préparer l'URL du document
+            $publicDocumentUrl = $this->prepareDocumentUrl($documentUrl);
+
+            // Vérifier l'accessibilité du document
+            if (!$this->isUrlAccessible($publicDocumentUrl)) {
+                throw new \Exception("Document non accessible à l'URL : {$publicDocumentUrl}");
             }
 
-            // Structure corrigée du payload
+            // Structure du payload avec validation
             $payload = [
                 'messaging_product' => 'whatsapp',
                 'recipient_type' => 'individual',
-                'to' => $to,
+                'to' => $this->formatPhoneNumber($to),
                 'type' => 'template',
                 'template' => [
-                    'name' => 'facturation',
+                    'name' => $templateName, // Utiliser la variable au lieu du string hardcodé
                     'language' => [
                         'code' => 'fr'
                     ],
-                    'components' => [
+                    'components' => []
+                ]
+            ];
+
+            // Ajouter le header avec document seulement si le document est accessible
+            if ($publicDocumentUrl && $this->isUrlAccessible($publicDocumentUrl)) {
+                $payload['template']['components'][] = [
+                    'type' => 'header',
+                    'parameters' => [
                         [
-                            'type' => 'header',
-                            'parameters' => [
-                                [
-                                    'type' => 'document',
-                                    'document' => [
-                                        'link' => $publicDocumentUrl,
-                                        'filename' => $documentName
-                                    ]
-                                ]
-                            ]
-                        ],
-                        [
-                            'type' => 'body',
-                            'parameters' => [
-                                [
-                                    'type' => 'text',
-                                    'text' => $nomclient
-                                ],
-                                [
-                                    'type' => 'text',
-                                    'text' => $motif
-                                ],
-                                [
-                                    'type' => 'text',
-                                    'text' => $montant
-                                ]
+                            'type' => 'document',
+                            'document' => [
+                                'link' => $publicDocumentUrl,
+                                'filename' => $documentName
                             ]
                         ]
+                    ]
+                ];
+            }
+
+            // Ajouter le body avec les paramètres
+            $payload['template']['components'][] = [
+                'type' => 'body',
+                'parameters' => [
+                    [
+                        'type' => 'text',
+                        'text' => $nomclient
+                    ],
+                    [
+                        'type' => 'text',
+                        'text' => $motif
+                    ],
+                    [
+                        'type' => 'text',
+                        'text' => $montant
                     ]
                 ]
             ];
 
-            Log::info('WhatsApp Versement Notification Payload', ['payload' => $payload]);
+            Log::info('WhatsApp Versement Notification Payload', [
+                'template_name' => $templateName,
+                'to' => $to,
+                'document_url' => $publicDocumentUrl,
+                'payload' => $payload
+            ]);
 
-            $response = Http::withToken($this->token)->post($url, $payload);
+            $response = Http::withToken($this->token)
+                ->timeout(30)
+                ->post($url, $payload);
 
             if (!$response->successful()) {
                 $error = $response->json();
                 Log::error('WhatsApp Versement Notification Error', [
                     'to' => $to,
-                    'response' => $error
+                    'status' => $response->status(),
+                    'response' => $error,
+                    'payload_sent' => $payload
                 ]);
-                throw new \Exception("Erreur WhatsApp: " . ($error['error']['message'] ?? 'Unknown error'));
+
+                // Messages d'erreur plus spécifiques
+                $errorMessage = $this->getErrorMessage($error);
+                throw new \Exception($errorMessage);
             }
 
-            return $response->json();
+            $responseData = $response->json();
+            Log::info('WhatsApp Versement Notification Success', [
+                'to' => $to,
+                'message_id' => $responseData['messages'][0]['id'] ?? 'unknown'
+            ]);
+
+            return $responseData;
 
         } catch (\Exception $e) {
             Log::error('WhatsApp API Error on versement notification', [
                 'to' => $to,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
             return ['error' => $e->getMessage()];
         }
     }
 
+// Méthodes d'aide
+    private function formatPhoneNumber(string $phone): string
+    {
+        // Supprimer tous les caractères non numériques sauf le +
+        $phone = preg_replace('/[^0-9+]/', '', $phone);
+
+        // Ajouter le préfixe international si nécessaire
+        if (!str_starts_with($phone, '+')) {
+            if (str_starts_with($phone, '0')) {
+                $phone = '+226' . substr($phone, 1); // Pour le Burkina Faso
+            } else {
+                $phone = '+' . $phone;
+            }
+        }
+
+        return $phone;
+    }
+
+    private function prepareDocumentUrl(string $documentUrl): string
+    {
+        if (filter_var($documentUrl, FILTER_VALIDATE_URL)) {
+            return $documentUrl;
+        }
+
+        $relativePath = str_replace(storage_path('app/public/'), '', $documentUrl);
+        return asset('storage/' . $relativePath);
+    }
+
+    private function isUrlAccessible(string $url): bool
+    {
+        try {
+            $response = Http::timeout(10)->head($url);
+            return $response->successful();
+        } catch (\Exception $e) {
+            Log::warning('URL accessibility check failed', [
+                'url' => $url,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    private function getErrorMessage(array $error): string
+    {
+        $code = $error['error']['code'] ?? 0;
+        $message = $error['error']['message'] ?? 'Unknown error';
+
+        $errorMessages = [
+            100 => 'Paramètre invalide - Vérifiez la structure du template',
+            131000 => 'Template non trouvé ou non approuvé',
+            131005 => 'Template non approuvé',
+            131021 => 'Paramètres du template invalides',
+            131026 => 'Format du numéro de téléphone invalide',
+            131047 => 'Réessayez dans quelques minutes',
+            131051 => 'Média non supporté',
+            131052 => 'Média trop volumineux',
+            131053 => 'Média non accessible'
+        ];
+
+        return $errorMessages[$code] ?? "Erreur WhatsApp ({$code}): {$message}";
+    }
     public function sendVersementNotificationSimple(string $to, string $nomclient, string $motif, string $montant, string $documentUrl, string $documentName): array
     {
         try {
@@ -394,42 +483,7 @@ class WhatsAppService
     }
 
 // Méthodes d'aide
-    private function formatPhoneNumber(string $phone): string
-    {
-        // Supprimer tous les espaces et caractères spéciaux
-        $phone = preg_replace('/[^0-9+]/', '', $phone);
 
-        // Ajouter le préfixe international si nécessaire
-        if (!str_starts_with($phone, '+')) {
-            if (str_starts_with($phone, '0')) {
-                $phone = '+226' . substr($phone, 1); // Pour le Burkina Faso
-            } else {
-                $phone = '+' . $phone;
-            }
-        }
-
-        return $phone;
-    }
-
-    private function prepareDocumentUrl(string $documentUrl): string
-    {
-        if (filter_var($documentUrl, FILTER_VALIDATE_URL)) {
-            return $documentUrl;
-        }
-
-        $relativePath = str_replace(storage_path('app/public/'), '', $documentUrl);
-        return asset('storage/' . $relativePath);
-    }
-
-    private function isUrlAccessible(string $url): bool
-    {
-        try {
-            $response = Http::timeout(10)->head($url);
-            return $response->successful();
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
 
     private function buildNotificationMessage(string $nomclient, string $motif, string $montant): string
     {
