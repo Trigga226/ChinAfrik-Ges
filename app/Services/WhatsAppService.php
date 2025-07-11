@@ -254,8 +254,7 @@ class WhatsAppService
                     [
                         'type' => 'document',
                         'document' => [
-                            'link' => $publicDocumentUrl,
-                            'filename' => $documentName
+                            'link' => $publicDocumentUrl
                         ]
                     ]
                 ]
