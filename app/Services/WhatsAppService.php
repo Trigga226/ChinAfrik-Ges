@@ -446,7 +446,7 @@ class WhatsAppService
     {
         try {
             // Utiliser le Business Account ID au lieu du Phone Number ID
-            $url = "{$this->baseUrl}/{$this->version}/{$this->businessAccountId}/message_templates";
+            $url = "{$this->baseUrl}/{$this->version}/{$this->businessAccountId}/facturation";
 
             $response = Http::withToken($this->token)->get($url);
 
