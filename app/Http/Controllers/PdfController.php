@@ -13,10 +13,16 @@ use Illuminate\Support\Facades\Log;
 
 class PdfController extends Controller
 {
+    protected $whatsappService;
+
+    public function __construct(WhatsAppService $whatsappService)
+    {
+        $this->whatsappService = $whatsappService;
+    }
 
     public function genererPdf($id)
     {
-        $whatsapp=new WhatsAppService();
+
         $solde=0;
         $soldet=0;
         $soldep=0;
@@ -78,12 +84,12 @@ class PdfController extends Controller
         //$whatsapp->sendFile($postulant->phone,storage_path('app/public/recu/'.$filename),$paiement->reference,'document',);
         //  $whatsapp->sendFile($postulant->phone,storage_path('app/logo.png'),'toto','document',);
        // $whatsapp->sendMessage('22671301755','Nous paiement de '.$paiement->montant . "de ".$postulant->nom_complet." pour ".$paiement->motif);
-        $whatsapp->sendVersementNotification('22671301755',$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture');
+        $this->whatsappService->sendVersementNotification('22671301755',$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture');
 
         //$admin=["22671301755","22670692165","8615527905630"];
         $admin=["22671301755","22664575750"];
         foreach($admin as $a){
-            $whatsapp->sendVersementNotification($a,$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture');
+            $this->whatsappService->sendVersementNotification($a,$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture');
         //    $whatsapp->sendWelcome($a);
         //    $whatsapp->sendFile($a,storage_path('app/public/recu/'.$filename),"Nouveau paiement de ".$paiement->montant . "de ".$postulant->nom_complet." pour ".$paiement->motif,'document',);
         }
