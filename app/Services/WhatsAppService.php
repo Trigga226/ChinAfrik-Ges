@@ -433,7 +433,6 @@ class WhatsAppService
                             'type' => 'document',
                             'document' => [
                                 'link' => $publicDocumentUrl,
-                                'filename' => 'Facture_' . date('YmdHis') . '.pdf'
                             ]
                         ]
                     ]
