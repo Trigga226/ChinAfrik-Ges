@@ -1,0 +1,28 @@
+<?php
+
+namespace App\Filament\Pages;
+
+use Filament\Pages\Page;
+use Filament\Pages\Dashboard as BaseDashboard;
+
+class MonDashboardBourse extends BaseDashboard
+{
+    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+
+    protected static string $view = 'filament.pages.mon-dashboard-bourse';
+
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('switchPanel')
+                ->label('Aller a Camion')
+                ->icon('heroicon-o-arrow-path')
+                ->color('primary')
+                ->url(function () {
+                    // Remplacez ceci par l'URL de votre autre panel
+                    return '/camion';
+                }),
+        ];
+    }
+}
