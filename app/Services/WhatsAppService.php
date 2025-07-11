@@ -334,10 +334,12 @@ class WhatsAppService
     }*/
 // Méthodes d'aide
 
+
+// VERSION DE DEBUG - Testez d'abord sans le document
     public function sendVersementNotificationWithTemplate(string $to, string $nomclient, string $motif, string $montant, string $documentUrl, string $documentName): array
     {
         try {
-            Log::info('=== ENVOI NOTIFICATION AVEC TEMPLATE ===', [
+            Log::info('=== ENVOI NOTIFICATION AVEC TEMPLATE (DEBUG) ===', [
                 'to' => $to,
                 'nomclient' => $nomclient,
                 'motif' => $motif,
@@ -345,65 +347,30 @@ class WhatsAppService
             ]);
 
             $url = "{$this->baseUrl}/{$this->version}/{$this->phoneNumberId}/messages";
-            $templateName = 'facturation'; // Le nom du template
-
-            // Format du numéro et préparation de l'URL du document
+            $templateName = 'facturation';
             $formattedPhone = $this->formatPhoneNumber($to);
-            $publicDocumentUrl = $this->prepareDocumentUrl($documentUrl);
 
-            // Vérifier si l'URL du document est accessible
-            if (!$this->isUrlAccessible($publicDocumentUrl)) {
-                throw new \Exception("Document non accessible à l'URL : {$publicDocumentUrl}");
-            }
-
-            Log::info('Préparation envoi', [
-                'template_name' => $templateName,
-                'formatted_phone' => $formattedPhone,
-                'document_url' => $publicDocumentUrl,
-            ]);
-
-            // Construire les composants du template
-            $components = [];
-
-            // 1. Composant Header (Document) - CORRECTION ICI
-            $components[] = [
-                'type' => 'header',
-                'parameters' => [
-                    [
-                        'type' => 'document',
-                        'document' => [
-                            'link' => $publicDocumentUrl,
-                            'filename' => $documentName // Ajouter le nom du fichier
+            // ÉTAPE 1: Tester d'abord SANS le document header
+            $components = [
+                [
+                    'type' => 'body',
+                    'parameters' => [
+                        [
+                            'type' => 'text',
+                            'text' => trim($nomclient)
+                        ],
+                        [
+                            'type' => 'text',
+                            'text' => trim($motif)
+                        ],
+                        [
+                            'type' => 'text',
+                            'text' => trim($montant)
                         ]
                     ]
                 ]
             ];
 
-            // 2. Composant Body - VALIDATION DES PARAMÈTRES
-            $bodyParams = [];
-
-            // Valider et nettoyer les paramètres
-            if (!empty($nomclient)) {
-                $bodyParams[] = ['type' => 'text', 'text' => trim($nomclient)];
-            }
-
-            if (!empty($motif)) {
-                $bodyParams[] = ['type' => 'text', 'text' => trim($motif)];
-            }
-
-            if (!empty($montant)) {
-                $bodyParams[] = ['type' => 'text', 'text' => trim($montant)];
-            }
-
-            // Ajouter le composant body seulement s'il y a des paramètres
-            if (!empty($bodyParams)) {
-                $components[] = [
-                    'type' => 'body',
-                    'parameters' => $bodyParams
-                ];
-            }
-
-            // Préparer le payload final
             $templatePayload = [
                 'messaging_product' => 'whatsapp',
                 'recipient_type' => 'individual',
@@ -416,66 +383,141 @@ class WhatsAppService
                 ]
             ];
 
-            // Log du payload pour debug
-            Log::info('Envoi template - Payload détaillé', [
-                'payload' => json_encode($templatePayload, JSON_PRETTY_PRINT),
-                'components_count' => count($components)
+            Log::info('DEBUG - Payload sans document', [
+                'payload' => json_encode($templatePayload, JSON_PRETTY_PRINT)
             ]);
 
-            // Envoyer la requête
             $response = Http::withToken($this->token)
                 ->timeout(30)
                 ->post($url, $templatePayload);
 
             $result = $response->json();
 
-            Log::info('Envoi template - Réponse', [
+            Log::info('DEBUG - Réponse sans document', [
                 'status' => $response->status(),
                 'response' => $result
             ]);
 
-            // Gérer les erreurs avec plus de détails
             if (!$response->successful()) {
                 $error = $result['error'] ?? [];
                 $errorDetails = $result['error']['error_data'] ?? [];
 
-                Log::error('Erreur envoi template détaillée', [
+                Log::error('DEBUG - Erreur sans document', [
                     'status' => $response->status(),
                     'error' => $error,
-                    'error_details' => $errorDetails,
-                    'full_response' => $result
+                    'error_details' => $errorDetails
                 ]);
 
+                // Si ça échoue même sans document, le problème est dans le template lui-même
                 throw new \Exception(
-                    "Erreur template WhatsApp: " . ($error['message'] ?? 'Erreur inconnue') .
-                    " (Code: " . ($error['code'] ?? 'N/A') . ")" .
-                    (!empty($errorDetails) ? " - Détails: " . json_encode($errorDetails) : "")
+                    "Erreur template (sans document): " . ($error['message'] ?? 'Erreur inconnue') .
+                    " - " . ($errorDetails['details'] ?? '')
                 );
             }
 
-            Log::info('=== NOTIFICATION TEMPLATE ENVOYÉE AVEC SUCCÈS ===', [
+            // Si ça marche sans document, essayons avec le document
+            Log::info('DEBUG - Succès sans document, test avec document...');
+
+            // ÉTAPE 2: Ajouter le document header
+            $publicDocumentUrl = $this->prepareDocumentUrl($documentUrl);
+
+            if (!$this->isUrlAccessible($publicDocumentUrl)) {
+                throw new \Exception("Document non accessible à l'URL : {$publicDocumentUrl}");
+            }
+
+            $componentsWithDocument = [
+                [
+                    'type' => 'header',
+                    'parameters' => [
+                        [
+                            'type' => 'document',
+                            'document' => [
+                                'link' => $publicDocumentUrl,
+                                'filename' => 'Facture_' . date('YmdHis') . '.pdf'
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    'type' => 'body',
+                    'parameters' => [
+                        [
+                            'type' => 'text',
+                            'text' => trim($nomclient)
+                        ],
+                        [
+                            'type' => 'text',
+                            'text' => trim($motif)
+                        ],
+                        [
+                            'type' => 'text',
+                            'text' => trim($montant)
+                        ]
+                    ]
+                ]
+            ];
+
+            $templatePayloadWithDoc = [
+                'messaging_product' => 'whatsapp',
+                'recipient_type' => 'individual',
                 'to' => $formattedPhone,
-                'template_name' => $templateName,
-                'message_id' => $result['messages'][0]['id'] ?? null
+                'type' => 'template',
+                'template' => [
+                    'name' => $templateName,
+                    'language' => ['code' => 'fr'],
+                    'components' => $componentsWithDocument
+                ]
+            ];
+
+            Log::info('DEBUG - Payload avec document', [
+                'payload' => json_encode($templatePayloadWithDoc, JSON_PRETTY_PRINT)
+            ]);
+
+            $responseWithDoc = Http::withToken($this->token)
+                ->timeout(30)
+                ->post($url, $templatePayloadWithDoc);
+
+            $resultWithDoc = $responseWithDoc->json();
+
+            Log::info('DEBUG - Réponse avec document', [
+                'status' => $responseWithDoc->status(),
+                'response' => $resultWithDoc
+            ]);
+
+            if (!$responseWithDoc->successful()) {
+                $error = $resultWithDoc['error'] ?? [];
+                $errorDetails = $resultWithDoc['error']['error_data'] ?? [];
+
+                Log::error('DEBUG - Erreur avec document', [
+                    'status' => $responseWithDoc->status(),
+                    'error' => $error,
+                    'error_details' => $errorDetails
+                ]);
+
+                throw new \Exception(
+                    "Erreur template (avec document): " . ($error['message'] ?? 'Erreur inconnue') .
+                    " - " . ($errorDetails['details'] ?? '')
+                );
+            }
+
+            Log::info('=== DEBUG - SUCCÈS AVEC DOCUMENT ===', [
+                'message_id' => $resultWithDoc['messages'][0]['id'] ?? null
             ]);
 
             return [
                 'success' => true,
-                'response' => $result,
+                'response' => $resultWithDoc,
                 'message' => 'Notification envoyée avec succès'
             ];
 
         } catch (\Exception $e) {
-            Log::error('=== ERREUR NOTIFICATION TEMPLATE ===', [
-                'to' => $to,
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+            Log::error('=== DEBUG - ERREUR ===', [
+                'error' => $e->getMessage()
             ]);
             return ['error' => $e->getMessage()];
         }
     }
+
     private function formatPhoneNumber(string $phone): string
     {
         // Supprimer tous les caractères non numériques sauf le +
