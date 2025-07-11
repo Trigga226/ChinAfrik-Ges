@@ -236,7 +236,7 @@ class WhatsAppService
                 'to' => $to,
                 'type' => 'template',
                 'template' => [
-                    'name' => $templateName,
+                    'name' => 'facturation',
                     'language' => [
                         'code' => 'fr'
                     ],
@@ -298,6 +298,97 @@ class WhatsAppService
         }
     }
 
+    public function sendVersementNotificationSimple(string $to, string $nomclient, string $motif, string $montant, string $documentUrl, string $documentName): array
+    {
+        try {
+            $responses = [];
+
+            // 1. Préparer l'URL publique du document
+            $publicDocumentUrl = $documentUrl;
+            if (!filter_var($documentUrl, FILTER_VALIDATE_URL)) {
+                $relativePath = str_replace(storage_path('app/public/'), '', $documentUrl);
+                $publicDocumentUrl = asset('storage/' . $relativePath);
+            }
+
+            // 2. Envoyer le document
+            Log::info('Envoi du document WhatsApp', [
+                'to' => $to,
+                'document_url' => $publicDocumentUrl,
+                'document_name' => $documentName
+            ]);
+
+            $url = "{$this->baseUrl}/{$this->version}/{$this->phoneNumberId}/messages";
+
+            $documentPayload = [
+                'messaging_product' => 'whatsapp',
+                'recipient_type' => 'individual',
+                'to' => $to,
+                'type' => 'document',
+                'document' => [
+                    'link' => $publicDocumentUrl,
+                    'caption' => "Document de versement - {$documentName}",
+                    'filename' => $documentName
+                ]
+            ];
+
+            $documentResponse = Http::withToken($this->token)->post($url, $documentPayload);
+            $responses['document'] = $documentResponse->json();
+
+            if (!$documentResponse->successful()) {
+                Log::error('Erreur envoi document WhatsApp', [
+                    'response' => $documentResponse->json()
+                ]);
+            }
+
+            // 3. Attendre un peu entre les messages
+            sleep(2);
+
+            // 4. Envoyer le message de notification
+            $message = "🎉 *Notification de versement*\n\n";
+            $message .= "Bonjour *{$nomclient}*,\n\n";
+            $message .= "✅ Votre versement a été effectué avec succès !\n\n";
+            $message .= "📋 *Détails :*\n";
+            $message .= "• Motif : {$motif}\n";
+            $message .= "• Montant : {$montant} FCFA\n";
+            $message .= "• Document : Voir ci-dessus\n\n";
+            $message .= "Merci pour votre confiance !\n\n";
+            $message .= "_L'équipe de gestion_";
+
+            $textPayload = [
+                'messaging_product' => 'whatsapp',
+                'recipient_type' => 'individual',
+                'to' => $to,
+                'type' => 'text',
+                'text' => [
+                    'body' => $message
+                ]
+            ];
+
+            $textResponse = Http::withToken($this->token)->post($url, $textPayload);
+            $responses['text'] = $textResponse->json();
+
+            if (!$textResponse->successful()) {
+                Log::error('Erreur envoi message WhatsApp', [
+                    'response' => $textResponse->json()
+                ]);
+            }
+
+            Log::info('Notification WhatsApp envoyée', [
+                'to' => $to,
+                'responses' => $responses
+            ]);
+
+            return $responses;
+
+        } catch (\Exception $e) {
+            Log::error('Erreur notification WhatsApp', [
+                'to' => $to,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return ['error' => $e->getMessage()];
+        }
+    }
     public function getTemplates(): array
     {
         try {
