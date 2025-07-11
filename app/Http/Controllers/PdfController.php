@@ -9,6 +9,7 @@ use App\Models\Versement;
 use App\Services\WhatsAppService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class PdfController extends Controller
 {
@@ -83,7 +84,20 @@ class PdfController extends Controller
        $response3= $this->whatsAppService->sendVersementNotification($phone, $dossier->nom_complet, $paiement->motif, $paiement->montant, storage_path('app/public/recu/'.$filename),$paiement->reference, 'facture');
 
 
+        Log::info('Résultat de l\'envoi WhatsApp', [
 
+            'response1' => $response1
+        ]);
+
+        Log::info('Résultat de l\'envoi WhatsApp', [
+
+            'response2' => $response2
+        ]);
+
+        Log::info('Résultat de l\'envoi WhatsApp', [
+
+            'response3' => $response3
+        ]);
 
         return $pdf->download($filename);
     }
