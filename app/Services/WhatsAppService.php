@@ -216,107 +216,146 @@ class WhatsAppService
      * @param string $documentName Le nom du fichier du document.
      * @return array La réponse de l'API WhatsApp.
      */
-    public function sendVersementNotification(string $to, string $nomclient, string $motif, string $montant, string $documentUrl, string $documentName): array
+    public function sendVersementNotificationWithTemplate(string $to, string $nomclient, string $motif, string $montant, string $documentUrl, string $documentName): array
     {
-        $url = "{$this->baseUrl}/{$this->version}/{$this->phoneNumberId}/messages";
-
         try {
-            // Vérifier que le template existe
-            $templateName = config('whatsapp.facturation_template_name', 'facturation');
+            Log::info('=== ENVOI NOTIFICATION AVEC TEMPLATE ===', [
+                'to' => $to,
+                'nomclient' => $nomclient,
+                'motif' => $motif,
+                'montant' => $montant
+            ]);
+
+            $responses = [];
+            $url = "{$this->baseUrl}/{$this->version}/{$this->phoneNumberId}/messages";
+
+            // IMPORTANT: Remplacez 'versement_notification' par le nom exact de votre template
+            $templateName = 'facturation'; // ← CHANGEZ CECI
+
+            // Format du numéro
+            $formattedPhone = $this->formatPhoneNumber($to);
 
             // Préparer l'URL du document
             $publicDocumentUrl = $this->prepareDocumentUrl($documentUrl);
+            $documentAccessible = $this->isUrlAccessible($publicDocumentUrl);
 
-            // Vérifier l'accessibilité du document
-            if (!$this->isUrlAccessible($publicDocumentUrl)) {
-                throw new \Exception("Document non accessible à l'URL : {$publicDocumentUrl}");
+            Log::info('Préparation envoi', [
+                'template_name' => $templateName,
+                'formatted_phone' => $formattedPhone,
+                'document_url' => $publicDocumentUrl,
+                'document_accessible' => $documentAccessible
+            ]);
+
+            // 1. Envoyer le document d'abord si accessible
+            if ($documentAccessible) {
+                $documentPayload = [
+                    'messaging_product' => 'whatsapp',
+                    'recipient_type' => 'individual',
+                    'to' => $formattedPhone,
+                    'type' => 'document',
+                    'document' => [
+                        'link' => $publicDocumentUrl,
+                        'caption' => "📄 Document de versement",
+                        'filename' => $documentName
+                    ]
+                ];
+
+                Log::info('Envoi document - Payload', $documentPayload);
+
+                $documentResponse = Http::withToken($this->token)
+                    ->timeout(30)
+                    ->post($url, $documentPayload);
+
+                $responses['document'] = $documentResponse->json();
+
+                Log::info('Envoi document - Réponse', [
+                    'status' => $documentResponse->status(),
+                    'response' => $responses['document']
+                ]);
+
+                if ($documentResponse->successful()) {
+                    sleep(3); // Attendre entre les messages
+                }
             }
 
-            // Structure du payload avec validation
-            $payload = [
+            // 2. Envoyer le message avec template
+            $templatePayload = [
                 'messaging_product' => 'whatsapp',
                 'recipient_type' => 'individual',
-                'to' => $this->formatPhoneNumber($to),
+                'to' => $formattedPhone,
                 'type' => 'template',
                 'template' => [
-                    'name' => $templateName, // Utiliser la variable au lieu du string hardcodé
+                    'name' => $templateName,
                     'language' => [
                         'code' => 'fr'
                     ],
-                    'components' => []
-                ]
-            ];
-
-            // Ajouter le header avec document seulement si le document est accessible
-            if ($publicDocumentUrl && $this->isUrlAccessible($publicDocumentUrl)) {
-                $payload['template']['components'][] = [
-                    'type' => 'header',
-                    'parameters' => [
+                    'components' => [
                         [
-                            'type' => 'document',
-                            'document' => [
-                                'link' => $publicDocumentUrl,
-                                'filename' => $documentName
+                            'type' => 'body',
+                            'parameters' => [
+                                [
+                                    'type' => 'text',
+                                    'text' => $nomclient
+                                ],
+                                [
+                                    'type' => 'text',
+                                    'text' => $motif
+                                ],
+                                [
+                                    'type' => 'text',
+                                    'text' => $montant
+                                ]
                             ]
                         ]
                     ]
-                ];
-            }
-
-            // Ajouter le body avec les paramètres
-            $payload['template']['components'][] = [
-                'type' => 'body',
-                'parameters' => [
-                    [
-                        'type' => 'text',
-                        'text' => $nomclient
-                    ],
-                    [
-                        'type' => 'text',
-                        'text' => $motif
-                    ],
-                    [
-                        'type' => 'text',
-                        'text' => $montant
-                    ]
                 ]
             ];
 
-            Log::info('WhatsApp Versement Notification Payload', [
-                'template_name' => $templateName,
-                'to' => $to,
-                'document_url' => $publicDocumentUrl,
-                'payload' => $payload
+            Log::info('Envoi template - Payload', $templatePayload);
+
+            $templateResponse = Http::withToken($this->token)
+                ->timeout(30)
+                ->post($url, $templatePayload);
+
+            $responses['template'] = $templateResponse->json();
+
+            Log::info('Envoi template - Réponse', [
+                'status' => $templateResponse->status(),
+                'response' => $responses['template']
             ]);
 
-            $response = Http::withToken($this->token)
-                ->timeout(30)
-                ->post($url, $payload);
-
-            if (!$response->successful()) {
-                $error = $response->json();
-                Log::error('WhatsApp Versement Notification Error', [
-                    'to' => $to,
-                    'status' => $response->status(),
-                    'response' => $error,
-                    'payload_sent' => $payload
+            // Vérifier les erreurs
+            if (!$templateResponse->successful()) {
+                $error = $responses['template']['error'] ?? [];
+                Log::error('Erreur envoi template', [
+                    'status' => $templateResponse->status(),
+                    'error' => $error
                 ]);
 
-                // Messages d'erreur plus spécifiques
-                $errorMessage = $this->getErrorMessage($error);
-                throw new \Exception($errorMessage);
+                throw new \Exception(
+                    "Erreur template WhatsApp: " .
+                    ($error['message'] ?? 'Erreur inconnue') .
+                    " (Code: " . ($error['code'] ?? 'N/A') . ")"
+                );
             }
 
-            $responseData = $response->json();
-            Log::info('WhatsApp Versement Notification Success', [
-                'to' => $to,
-                'message_id' => $responseData['messages'][0]['id'] ?? 'unknown'
+            Log::info('=== NOTIFICATION TEMPLATE ENVOYÉE AVEC SUCCÈS ===', [
+                'to' => $formattedPhone,
+                'template_name' => $templateName,
+                'message_ids' => [
+                    'document' => $responses['document']['messages'][0]['id'] ?? null,
+                    'template' => $responses['template']['messages'][0]['id'] ?? null
+                ]
             ]);
 
-            return $responseData;
+            return [
+                'success' => true,
+                'responses' => $responses,
+                'message' => 'Notification envoyée avec succès'
+            ];
 
         } catch (\Exception $e) {
-            Log::error('WhatsApp API Error on versement notification', [
+            Log::error('=== ERREUR NOTIFICATION TEMPLATE ===', [
                 'to' => $to,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
@@ -325,7 +364,6 @@ class WhatsAppService
             return ['error' => $e->getMessage()];
         }
     }
-
 // Méthodes d'aide
     private function formatPhoneNumber(string $phone): string
     {
