@@ -6,6 +6,7 @@ use App\Http\Responses\CustomLoginResponse;
 use App\Models\User;
 use App\Models\Versement;
 use App\Observers\UserObserver;
+use App\Services\WhatsAppService;
 use Filament\Http\Responses\Auth\Contracts\LoginResponse;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -17,7 +18,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(WhatsAppService::class, function ($app) {
+            return new WhatsAppService();
+        });
     }
 
     /**

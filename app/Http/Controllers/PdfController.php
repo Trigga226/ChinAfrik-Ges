@@ -8,8 +8,6 @@ use App\Models\Postulant;
 use App\Models\Versement;
 use App\Services\WhatsAppService;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class PdfController extends Controller
 {
