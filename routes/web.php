@@ -9,3 +9,7 @@ Route::get('/', function () {
 Route::get('/telecharger-recu/{record}', [\App\Http\Controllers\PdfController::class, 'genererPdf'])->name('recu')->middleware('auth');
 
 Route::get('/telecharger-pointage/{resource}', [\App\Http\Controllers\CamionsController::class, 'generatePDFCamion'])->name('pointage')->middleware('auth');
+
+Route::get('login',function (){
+    return redirect('/admin/login');
+})->name('login');

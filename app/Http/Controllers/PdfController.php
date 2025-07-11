@@ -74,9 +74,10 @@ class PdfController extends Controller
 
 
         //$whatsapp->sendWelcome($phone);
-       // $whatsapp->sendFile($postulant->phone,storage_path('app/public/recu/'.$filename),$paiement->reference,'document',);
+      $response1= $whatsapp->sendFile($postulant->phone,storage_path('app/public/recu/'.$filename),$paiement->reference,'document',);
       //  $whatsapp->sendFile($postulant->phone,storage_path('app/logo.png'),'toto','document',);
-        $whatsapp->sendVersementNotification($phone, $dossier->nom_complet, $paiement->motif, $paiement->montant, storage_path('app/public/recu/'.$filename),$paiement->reference, 'facture');
+       $response2= $whatsapp->sendMessage($phone,"Nouveau versement de ".$dossier->nom_complet." pour".$paiement->motif." d'un montant de ".$paiement->montant." FCFA");
+       $response3= $whatsapp->sendVersementNotification($phone, $dossier->nom_complet, $paiement->motif, $paiement->montant, storage_path('app/public/recu/'.$filename),$paiement->reference, 'facture');
 
 
 
