@@ -216,7 +216,7 @@ class WhatsAppService
      * @param string $documentName Le nom du fichier du document.
      * @return array La réponse de l'API WhatsApp.
      */
-    public function sendVersementNotificationWithTemplate(string $to, string $nomclient, string $motif, string $montant, string $documentUrl, string $documentName): array
+/*    public function sendVersementNotificationWithTemplate(string $to, string $nomclient, string $motif, string $montant, string $documentUrl, string $documentName): array
     {
         try {
             Log::info('=== ENVOI NOTIFICATION AVEC TEMPLATE ===', [
@@ -331,8 +331,151 @@ class WhatsAppService
             ]);
             return ['error' => $e->getMessage()];
         }
-    }
+    }*/
 // Méthodes d'aide
+
+    public function sendVersementNotificationWithTemplate(string $to, string $nomclient, string $motif, string $montant, string $documentUrl, string $documentName): array
+    {
+        try {
+            Log::info('=== ENVOI NOTIFICATION AVEC TEMPLATE ===', [
+                'to' => $to,
+                'nomclient' => $nomclient,
+                'motif' => $motif,
+                'montant' => $montant
+            ]);
+
+            $url = "{$this->baseUrl}/{$this->version}/{$this->phoneNumberId}/messages";
+            $templateName = 'facturation'; // Le nom du template
+
+            // Format du numéro et préparation de l'URL du document
+            $formattedPhone = $this->formatPhoneNumber($to);
+            $publicDocumentUrl = $this->prepareDocumentUrl($documentUrl);
+
+            // Vérifier si l'URL du document est accessible
+            if (!$this->isUrlAccessible($publicDocumentUrl)) {
+                throw new \Exception("Document non accessible à l'URL : {$publicDocumentUrl}");
+            }
+
+            Log::info('Préparation envoi', [
+                'template_name' => $templateName,
+                'formatted_phone' => $formattedPhone,
+                'document_url' => $publicDocumentUrl,
+            ]);
+
+            // Construire les composants du template
+            $components = [];
+
+            // 1. Composant Header (Document) - CORRECTION ICI
+            $components[] = [
+                'type' => 'header',
+                'parameters' => [
+                    [
+                        'type' => 'document',
+                        'document' => [
+                            'link' => $publicDocumentUrl,
+                            'filename' => $documentName // Ajouter le nom du fichier
+                        ]
+                    ]
+                ]
+            ];
+
+            // 2. Composant Body - VALIDATION DES PARAMÈTRES
+            $bodyParams = [];
+
+            // Valider et nettoyer les paramètres
+            if (!empty($nomclient)) {
+                $bodyParams[] = ['type' => 'text', 'text' => trim($nomclient)];
+            }
+
+            if (!empty($motif)) {
+                $bodyParams[] = ['type' => 'text', 'text' => trim($motif)];
+            }
+
+            if (!empty($montant)) {
+                $bodyParams[] = ['type' => 'text', 'text' => trim($montant)];
+            }
+
+            // Ajouter le composant body seulement s'il y a des paramètres
+            if (!empty($bodyParams)) {
+                $components[] = [
+                    'type' => 'body',
+                    'parameters' => $bodyParams
+                ];
+            }
+
+            // Préparer le payload final
+            $templatePayload = [
+                'messaging_product' => 'whatsapp',
+                'recipient_type' => 'individual',
+                'to' => $formattedPhone,
+                'type' => 'template',
+                'template' => [
+                    'name' => $templateName,
+                    'language' => ['code' => 'fr'],
+                    'components' => $components
+                ]
+            ];
+
+            // Log du payload pour debug
+            Log::info('Envoi template - Payload détaillé', [
+                'payload' => json_encode($templatePayload, JSON_PRETTY_PRINT),
+                'components_count' => count($components)
+            ]);
+
+            // Envoyer la requête
+            $response = Http::withToken($this->token)
+                ->timeout(30)
+                ->post($url, $templatePayload);
+
+            $result = $response->json();
+
+            Log::info('Envoi template - Réponse', [
+                'status' => $response->status(),
+                'response' => $result
+            ]);
+
+            // Gérer les erreurs avec plus de détails
+            if (!$response->successful()) {
+                $error = $result['error'] ?? [];
+                $errorDetails = $result['error']['error_data'] ?? [];
+
+                Log::error('Erreur envoi template détaillée', [
+                    'status' => $response->status(),
+                    'error' => $error,
+                    'error_details' => $errorDetails,
+                    'full_response' => $result
+                ]);
+
+                throw new \Exception(
+                    "Erreur template WhatsApp: " . ($error['message'] ?? 'Erreur inconnue') .
+                    " (Code: " . ($error['code'] ?? 'N/A') . ")" .
+                    (!empty($errorDetails) ? " - Détails: " . json_encode($errorDetails) : "")
+                );
+            }
+
+            Log::info('=== NOTIFICATION TEMPLATE ENVOYÉE AVEC SUCCÈS ===', [
+                'to' => $formattedPhone,
+                'template_name' => $templateName,
+                'message_id' => $result['messages'][0]['id'] ?? null
+            ]);
+
+            return [
+                'success' => true,
+                'response' => $result,
+                'message' => 'Notification envoyée avec succès'
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('=== ERREUR NOTIFICATION TEMPLATE ===', [
+                'to' => $to,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return ['error' => $e->getMessage()];
+        }
+    }
     private function formatPhoneNumber(string $phone): string
     {
         // Supprimer tous les caractères non numériques sauf le +
