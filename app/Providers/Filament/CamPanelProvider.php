@@ -69,7 +69,7 @@ class CamPanelProvider extends PanelProvider
                 FilamentShieldPlugin::make(),
                 FilamentMessagesPlugin::make(),
                 FilamentGeneralSettingsPlugin::make()
-                    ->canAccess(fn() => auth()->user()->hasRole('super_admin') )
+                    ->canAccess(true)
                     ->setSort(3)
                     ->setIcon('heroicon-o-cog')
                     ->setNavigationGroup('Administration')
