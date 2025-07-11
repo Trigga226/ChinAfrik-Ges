@@ -75,9 +75,10 @@ class PdfController extends Controller
 
 
         //$whatsapp->sendWelcome($phone);
-        $whatsapp->sendFile($postulant->phone,storage_path('app/public/recu/'.$filename),$paiement->reference,'document',);
+        //$whatsapp->sendFile($postulant->phone,storage_path('app/public/recu/'.$filename),$paiement->reference,'document',);
         //  $whatsapp->sendFile($postulant->phone,storage_path('app/logo.png'),'toto','document',);
-        $whatsapp->sendMessage('22671301755','Nous paiement de '.$paiement->montant . "de ".$postulant->nom_complet." pour ".$paiement->motif);
+       // $whatsapp->sendMessage('22671301755','Nous paiement de '.$paiement->montant . "de ".$postulant->nom_complet." pour ".$paiement->motif);
+        $whatsapp->sendVersementNotification('22671301755',$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture');
 
         $admin=["22671301755","22670692165","8615527905630"];
         foreach($admin as $a){
@@ -86,7 +87,6 @@ class PdfController extends Controller
         }
 
 
-        return $pdf->download($filename);
         return $pdf->download($filename);
     }
 }
