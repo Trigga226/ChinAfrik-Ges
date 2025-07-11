@@ -293,4 +293,49 @@ class WhatsAppService
             return ['error' => $e->getMessage()];
         }
     }
+
+
+    public function getTemplates(): array
+    {
+        try {
+            $url = "{$this->baseUrl}/{$this->version}/{$this->phoneNumberId}/message_templates";
+
+            $response = Http::withToken($this->token)->get($url);
+
+            if (!$response->successful()) {
+                Log::error('WhatsApp Get Templates Error', [
+                    'response' => $response->json()
+                ]);
+                return ['error' => 'Erreur lors de la récupération des templates'];
+            }
+
+            return $response->json();
+
+        } catch (\Exception $e) {
+            Log::error('WhatsApp Get Templates Exception', [
+                'error' => $e->getMessage()
+            ]);
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public function templateExists(string $templateName): bool
+    {
+        $templates = $this->getTemplates();
+
+        if (isset($templates['error'])) {
+            return false;
+        }
+
+
+        if (isset($templates['data'])) {
+            foreach ($templates['data'] as $template) {
+                if ($template['name'] === $templateName) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 }

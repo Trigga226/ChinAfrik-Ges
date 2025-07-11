@@ -88,7 +88,35 @@ class PdfController extends Controller
         //    $whatsapp->sendFile($a,storage_path('app/public/recu/'.$filename),"Nouveau paiement de ".$paiement->montant . "de ".$postulant->nom_complet." pour ".$paiement->motif,'document',);
         }
 
+        $this->listTemplates();
 
         return $pdf->download($filename);
+    }
+
+
+
+    public function listTemplates()
+    {
+        $templates = $this->whatsappService->getTemplates();
+
+        if (isset($templates['error'])) {
+            return response()->json(['error' => $templates['error']], 500);
+        }
+
+        $templateNames = [];
+        if (isset($templates['data'])) {
+            foreach ($templates['data'] as $template) {
+                $templateNames[] = [
+                    'name' => $template['name'],
+                    'status' => $template['status'] ?? 'unknown',
+                    'language' => $template['language'] ?? 'unknown'
+                ];
+            }
+        }
+
+        return response()->json([
+            'templates' => $templateNames,
+            'facturation_exists' => $this->whatsappService->templateExists('facturation')
+        ]);
     }
 }
