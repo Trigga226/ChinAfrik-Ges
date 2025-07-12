@@ -336,6 +336,7 @@ class WhatsAppService
 
 
 // VERSION DE DEBUG - Testez d'abord sans le document
+
     public function sendVersementNotificationWithTemplate(string $to, string $nomclient, string $motif, string $montant, string $documentUrl, string $documentName): array
     {
         try {
@@ -360,6 +361,38 @@ class WhatsAppService
 
             // Construire les composants avec le header DOCUMENT obligatoire
             $components = [
+                [
+                    'type' => 'header',
+                    'parameters' => [
+                        [
+                            'type' => 'document',
+                            'document' => [
+                                'link' => $publicDocumentUrl
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    'type' => 'body',
+                    'parameters' => [
+                        [
+                            'type' => 'text',
+                            'text' => trim($nomclient)
+                        ],
+                        [
+                            'type' => 'text',
+                            'text' => trim($motif)
+                        ],
+                        [
+                            'type' => 'text',
+                            'text' => trim($montant)
+                        ]
+                    ]
+                ]
+            ];
+
+            // Alternative: Essayer sans le wrapper 'parameters' pour le header
+            $alternativeComponents = [
                 [
                     'type' => 'header',
                     'parameters' => [
