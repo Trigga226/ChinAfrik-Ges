@@ -377,15 +377,18 @@ class WhatsAppService
                     'parameters' => [
                         [
                             'type' => 'text',
-                            'text' => trim($nomclient)
+                            'text' => trim($nomclient),
+                            'parameter_name'=>'nomclient',
                         ],
                         [
                             'type' => 'text',
-                            'text' => trim($motif)
+                            'text' => trim($motif),
+                            'parameter_name'=>'motif',
                         ],
                         [
                             'type' => 'text',
-                            'text' => trim($montant)
+                            'text' => trim($montant),
+                             'parameter_name'=>'montant',
                         ]
                     ]
                 ]
@@ -409,15 +412,18 @@ class WhatsAppService
                     'parameters' => [
                         [
                             'type' => 'text',
-                            'text' => trim($nomclient)
+                            'text' => trim($nomclient),
+                            'parameter_name'=>'nomclient',
                         ],
                         [
                             'type' => 'text',
-                            'text' => trim($motif)
+                            'text' => trim($motif),
+                            'parameter_name'=>'motif',
                         ],
                         [
                             'type' => 'text',
-                            'text' => trim($montant)
+                            'text' => trim($montant),
+                            'parameter_name'=>'montant',
                         ]
                     ]
                 ]
@@ -431,7 +437,7 @@ class WhatsAppService
                 'template' => [
                     'name' => $templateName,
                     'language' => ['code' => 'fr'],
-                    'components' => $alternativeComponents
+                    'components' => $components
                 ]
             ];
 
