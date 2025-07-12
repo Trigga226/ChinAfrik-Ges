@@ -431,7 +431,7 @@ class WhatsAppService
                 'template' => [
                     'name' => $templateName,
                     'language' => ['code' => 'fr'],
-                    'components' => $components
+                    'components' => $alternativeComponents
                 ]
             ];
 
