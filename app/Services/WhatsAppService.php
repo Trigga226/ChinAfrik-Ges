@@ -366,8 +366,7 @@ class WhatsAppService
                         [
                             'type' => 'document',
                             'document' => [
-                                'link' => $publicDocumentUrl,
-                                'name' => $documentName // Nom du document (obligatoire)
+                                'link' => $publicDocumentUrl
                             ]
                         ]
                     ]
