@@ -82,13 +82,13 @@ class PdfController extends Controller
         //$whatsapp->sendFile($postulant->phone,storage_path('app/public/recu/'.$filename),$paiement->reference,'document',);
         //  $whatsapp->sendFile($postulant->phone,storage_path('app/logo.png'),'toto','document',);
        // $whatsapp->sendMessage('22671301755','Nous paiement de '.$paiement->montant . "de ".$postulant->nom_complet." pour ".$paiement->motif);
-        $this->whatsappService->sendVersementNotificationSimple('22671301755',$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture');
-        $this->whatsappService->sendVersementNotificationWithTemplate('22671301755',$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture');
+        //$this->whatsappService->sendVersementNotificationSimple('22671301755',$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture');
+        //$this->whatsappService->sendVersementNotificationWithTemplate('22671301755',$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture');
 
         //$admin=["22671301755","22670692165","8615527905630"];
         $admin=["22671301755","22664575750"];
         foreach($admin as $a){
-            $this->whatsappService->sendVersementNotificationSimple($a,$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture');
+           // $this->whatsappService->sendVersementNotificationSimple($a,$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture');
             $this->whatsappService->sendVersementNotificationWithTemplate($a,$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture',);
         //    $whatsapp->sendWelcome($a);
         //    $whatsapp->sendFile($a,storage_path('app/public/recu/'.$filename),"Nouveau paiement de ".$paiement->montant . "de ".$postulant->nom_complet." pour ".$paiement->motif,'document',);
