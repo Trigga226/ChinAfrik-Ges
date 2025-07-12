@@ -132,9 +132,9 @@
                     <tr>
                         <td>
                             <strong>Émetteur:</strong><br>
-                            ChinAfrik Groupe<br>
-                            01BP 4589 Ouagadougou,Burkina Faso<br>
-                            4589 Ouagadougou,Burkina Faso<br>
+                            ChinAfrik-Group<br>
+                            02 BP 5597 Ouagadougou,Burkina Faso<br>
+                            5597 Ouagadougou 02,Burkina Faso<br>
                         </td>
                         <td class="text-right">
                             <strong>Client:</strong><br>

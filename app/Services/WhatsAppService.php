@@ -394,40 +394,7 @@ class WhatsAppService
                 ]
             ];
 
-            // Alternative: Essayer sans le wrapper 'parameters' pour le header
-            $alternativeComponents = [
-                [
-                    'type' => 'header',
-                    'parameters' => [
-                        [
-                            'type' => 'document',
-                            'document' => [
-                                'link' => $publicDocumentUrl
-                            ]
-                        ]
-                    ]
-                ],
-                [
-                    'type' => 'body',
-                    'parameters' => [
-                        [
-                            'type' => 'text',
-                            'text' => trim($nomclient),
-                            'parameter_name'=>'nomclient',
-                        ],
-                        [
-                            'type' => 'text',
-                            'text' => trim($motif),
-                            'parameter_name'=>'motif',
-                        ],
-                        [
-                            'type' => 'text',
-                            'text' => trim($montant),
-                            'parameter_name'=>'montant',
-                        ]
-                    ]
-                ]
-            ];
+
 
             $templatePayload = [
                 'messaging_product' => 'whatsapp',
@@ -489,6 +456,130 @@ class WhatsAppService
             return ['error' => $e->getMessage()];
         }
     }
+
+    public function sendVersementConfirmationNotificationWithTemplate(string $to, string $nomclient, string $motif, string $montant, string $documentUrl, string $documentName): array
+    {
+        try {
+            Log::info('=== ENVOI NOTIFICATION AVEC TEMPLATE (DEBUG) ===', [
+                'to' => $to,
+                'nomclient' => $nomclient,
+                'motif' => $motif,
+                'montant' => $montant
+            ]);
+
+            $url = "{$this->baseUrl}/{$this->version}/{$this->phoneNumberId}/messages";
+            $templateName = 'reu';
+            $formattedPhone = $this->formatPhoneNumber($to);
+
+            // Préparer l'URL du document
+            $publicDocumentUrl = $this->prepareDocumentUrl($documentUrl);
+
+            // Vérifier l'accessibilité du document
+            if (!$this->isUrlAccessible($publicDocumentUrl)) {
+                throw new \Exception("Document non accessible à l'URL : {$publicDocumentUrl}");
+            }
+
+            // Construire les composants avec le header DOCUMENT obligatoire
+            $components = [
+                [
+                    'type' => 'header',
+                    'parameters' => [
+                        [
+                            'type' => 'document',
+                            'document' => [
+                                'link' => $publicDocumentUrl
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    'type' => 'body',
+                    'parameters' => [
+                        [
+                            'type' => 'text',
+                            'text' => trim($nomclient),
+                            'parameter_name'=>'nomclient',
+                        ],
+                        [
+                            'type' => 'text',
+                            'text' => trim($motif),
+                            'parameter_name'=>'motif',
+                        ],
+                        [
+                            'type' => 'text',
+                            'text' => trim($montant),
+                            'parameter_name'=>'montant',
+                        ]
+                    ]
+                ]
+            ];
+
+
+
+            $templatePayload = [
+                'messaging_product' => 'whatsapp',
+                'recipient_type' => 'individual',
+                'to' => $formattedPhone,
+                'type' => 'template',
+                'template' => [
+                    'name' => $templateName,
+                    'language' => ['code' => 'fr'],
+                    'components' => $components
+                ]
+            ];
+
+            Log::info('DEBUG - Payload final', [
+                'payload' => json_encode($templatePayload, JSON_PRETTY_PRINT)
+            ]);
+
+            $response = Http::withToken($this->token)
+                ->timeout(30)
+                ->post($url, $templatePayload);
+
+            $result = $response->json();
+
+            Log::info('DEBUG - Réponse API', [
+                'status' => $response->status(),
+                'response' => $result
+            ]);
+
+            if (!$response->successful()) {
+                $error = $result['error'] ?? [];
+                $errorDetails = $result['error']['error_data'] ?? [];
+
+                Log::error('DEBUG - Erreur API', [
+                    'status' => $response->status(),
+                    'error' => $error,
+                    'error_details' => $errorDetails
+                ]);
+
+                throw new \Exception(
+                    "Erreur template: " . ($error['message'] ?? 'Erreur inconnue') .
+                    " - " . ($errorDetails['details'] ?? '')
+                );
+            }
+
+            Log::info('=== DEBUG - SUCCÈS ===', [
+                'message_id' => $result['messages'][0]['id'] ?? null
+            ]);
+
+            return [
+                'success' => true,
+                'response' => $result,
+                'message' => 'Notification envoyée avec succès'
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('=== DEBUG - ERREUR ===', [
+                'error' => $e->getMessage()
+            ]);
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+
+
+
     private function formatPhoneNumber(string $phone): string
     {
         // Supprimer tous les caractères non numériques sauf le +
