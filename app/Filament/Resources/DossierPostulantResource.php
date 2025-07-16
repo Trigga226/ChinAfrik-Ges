@@ -363,4 +363,11 @@ class DossierPostulantResource extends Resource
 
         return $compte;
     }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->when(auth()->user()->hasRole('postulant'),
+                fn (Builder $query) => $query->where('email', auth()->user()->email));
+    }
 }
