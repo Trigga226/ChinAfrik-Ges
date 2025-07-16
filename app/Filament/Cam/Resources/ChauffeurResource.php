@@ -20,7 +20,7 @@ class ChauffeurResource extends Resource
     protected static ?string $model = Chauffeur::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $label="Nos Chauffeurs";
+    protected static ?string $label="Chauffeurs";
 
 
 
