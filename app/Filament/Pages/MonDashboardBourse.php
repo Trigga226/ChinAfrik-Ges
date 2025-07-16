@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Pages\Page;
 use Filament\Pages\Dashboard as BaseDashboard;
 
@@ -10,7 +11,7 @@ class MonDashboardBourse extends BaseDashboard
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static string $view = 'filament.pages.mon-dashboard-bourse';
-
+    use HasPageShield;
 
     protected function getHeaderActions(): array
     {
@@ -24,5 +25,10 @@ class MonDashboardBourse extends BaseDashboard
                     return '/camion';
                 }),
         ];
+    }
+
+    public function canAccess(): bool
+    {
+
     }
 }
