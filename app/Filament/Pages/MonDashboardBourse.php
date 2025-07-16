@@ -27,8 +27,5 @@ class MonDashboardBourse extends BaseDashboard
         ];
     }
 
-    public function canAccess(): bool
-    {
-
-    }
+   
 }
