@@ -27,5 +27,5 @@ class MonDashboardBourse extends BaseDashboard
         ];
     }
 
-   
+
 }
