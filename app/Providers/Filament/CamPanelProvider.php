@@ -39,6 +39,7 @@ class CamPanelProvider extends PanelProvider
                 'primary' => Color::Indigo,
             ])->brandName("Kosboura")
             ->brandLogo('/logo2.png')
+            ->favicon('/logo2.png')
             ->maxContentWidth(MaxWidth::Full)
             ->discoverResources(in: app_path('Filament/Cam/Resources'), for: 'App\\Filament\\Cam\\Resources')
             ->discoverPages(in: app_path('Filament/Cam/Pages'), for: 'App\\Filament\\Cam\\Pages')
