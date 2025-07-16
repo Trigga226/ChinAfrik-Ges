@@ -16,9 +16,9 @@ class ListUsers extends ListRecords
         return [
             Actions\CreateAction::make()
             ->modalWidth()
-            ->before(function (User $record) {
-                $record->phone=(str_replace('+','',$record->phone));
-            }),
+            //->before(function (User $record) {
+             //   $record->phone=(str_replace('+','',$record->phone));
+           // }),
         ];
     }
 }
