@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Cam\Resources\DepenseCamionResource\Pages;
+namespace App\Filament\Cam\Resources\SuiviMachineResource\Pages;
 
-use App\Filament\Cam\Resources\DepenseCamionResource;
+use App\Filament\Cam\Resources\SuiviMachineResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
-class EditDepenseCamion extends EditRecord
+class EditSuiviMachine extends EditRecord
 {
-    protected static string $resource = DepenseCamionResource::class;
+    protected static string $resource = SuiviMachineResource::class;
 
     protected function getHeaderActions(): array
     {

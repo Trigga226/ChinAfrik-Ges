@@ -2,9 +2,9 @@
 
 namespace App\Filament\Cam\Resources;
 
-use App\Filament\Cam\Resources\DepenseCamionResource\Pages;
-use App\Filament\Cam\Resources\DepenseCamionResource\RelationManagers;
-use App\Models\DepenseCamion;
+use App\Filament\Cam\Resources\DepenseMachineResource\Pages;
+use App\Filament\Cam\Resources\DepenseMachineResource\RelationManagers;
+use App\Models\DepenseMachine;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
@@ -21,9 +21,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class DepenseCamionResource extends Resource
+class DepenseMachineResource extends Resource
 {
-    protected static ?string $model = DepenseCamion::class;
+    protected static ?string $model = DepenseMachine::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $navigationGroup = 'Dépenses';
@@ -33,23 +33,23 @@ class DepenseCamionResource extends Resource
         return $form
             ->schema([
                 Section::make()
-                ->schema([
-                    Select::make('camion')
-                    ->relationship('camions','designation')
-                    ->searchable()
-                    ->preload()->required(),
+                    ->schema([
+                        Select::make('machine')
+                            ->relationship('machines','designation')
+                            ->searchable()
+                            ->preload()->required(),
 
-                    DatePicker::make('date')->required()->label("Date dépense"),
+                        DatePicker::make('date')->required()->label("Date dépense"),
 
-                    TextInput::make("motif")->required(),
+                        TextInput::make("motif")->required(),
 
-                    TextInput::make("montant")->numeric()->required()->suffix("FCFA"),
+                        TextInput::make("montant")->numeric()->required()->suffix("FCFA"),
 
-                    Textarea::make("description")->required(),
+                        Textarea::make("description")->required(),
 
 
-                    FileUpload::make("piece")->label("Pièce comptable")->required()
-                    ->disk('public')->directory('pieces')->downloadable()->multiple(),
+                        FileUpload::make("piece")->label("Pièce comptable")->required()
+                            ->disk('public')->directory('pieces')->downloadable()->multiple(),
 
 
                     ])->columns(3),
@@ -60,7 +60,7 @@ class DepenseCamionResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('camion')->searchable()->sortable()->weight(FontWeight::Bold),
+                TextColumn::make('machine')->searchable()->sortable()->weight(FontWeight::Bold),
                 TextColumn::make('date')->searchable()->sortable()->badge()->color('info'),
                 TextColumn::make('motif')->searchable()->sortable()->limit(50),
                 TextColumn::make('description')->searchable()->sortable()->limit(50),
@@ -90,10 +90,10 @@ class DepenseCamionResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDepenseCamions::route('/'),
-            'create' => Pages\CreateDepenseCamion::route('/create'),
-            'view' => Pages\ViewDepenseCamion::route('/{record}'),
-            'edit' => Pages\EditDepenseCamion::route('/{record}/edit'),
+            'index' => Pages\ListDepenseMachines::route('/'),
+            'create' => Pages\CreateDepenseMachine::route('/create'),
+            'view' => Pages\ViewDepenseMachine::route('/{record}'),
+            'edit' => Pages\EditDepenseMachine::route('/{record}/edit'),
         ];
     }
 }

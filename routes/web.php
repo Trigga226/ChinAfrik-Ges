@@ -2,10 +2,14 @@
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PdfController;
 
 Route::get('/', function () {
     return redirect('/admin');
 });
+
+Route::get('/generate-pdf', [PdfController::class, 'genererExportPdf']);
+
 
 Route::get('/telecharger-recu/{record}', [\App\Http\Controllers\PdfController::class, 'genererPdf'])->name('recu')->middleware('auth');
 

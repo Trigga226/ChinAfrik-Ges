@@ -20,7 +20,7 @@ return new class extends Migration
             $table->time('heure_sortie')->nullable();
             $table->time('heure_retour')->nullable();
             $table->boolean('ravitailler')->default(false);
-            $table->double('qte_ravitailler')->nullable();
+            $table->double('montant_ravitailler')->nullable();
             $table->boolean('a_travailler')->default(false);
             $table->longText('observation')->nullable();
             $table->foreign('camion')->references('designation')->on('camions')->onDelete('cascade')->onUpdate('cascade');

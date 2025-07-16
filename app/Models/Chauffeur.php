@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Chauffeur extends Model
 {
@@ -23,4 +25,12 @@ class Chauffeur extends Model
         return $this->hasMany(PointageCamion::class,'chauffeur','id');
     }
 
+
+    public function suivisCam():HasMany{
+        return $this->hasMany(SuiviCamion::class,'chauffeur','id');
+    }
+
+    public function suiviMac():HasMany{
+        return $this->hasMany(SuiviMachine::class,'chauffeur','id');
+    }
 }

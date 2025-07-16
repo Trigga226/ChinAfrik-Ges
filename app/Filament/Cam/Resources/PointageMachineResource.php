@@ -81,7 +81,8 @@ class PointageMachineResource extends Resource
                         Toggle::make('ravitailler')->label("A été ravitailler")->visible(function(Get $get){
                             return  $get('a_travailler');
                         })->live(),
-                        TextInput::make("qte_ravitailler")->numeric()->label("Quantité ravitaillée")
+
+                        TextInput::make("montant_ravitailler")->numeric()->label("Montant ravitaillé")->suffix('FCFA')
                             ->visible(function(Get $get){
                                 return  $get('ravitailler');
                             })

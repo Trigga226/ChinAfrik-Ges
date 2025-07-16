@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Machine extends Model
 {
@@ -28,5 +30,9 @@ class Machine extends Model
 
     public function pointages(){
         return $this->hasMany(PointageMachine::class,'machine','designation');
+    }
+
+    public function suivis():HasMany{
+        return $this->hasMany(SuiviMachine::class,'machine','immatriculation');
     }
 }

@@ -9,4 +9,8 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateDepenseCamion extends CreateRecord
 {
     protected static string $resource = DepenseCamionResource::class;
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

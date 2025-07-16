@@ -94,7 +94,7 @@ class PointageCamionResource extends Resource
                     Toggle::make('ravitailler')->label("A été ravitailler")->visible(function(Get $get){
                         return  $get('a_travailler');
                     })->live(),
-                    TextInput::make("qte_ravitailler")->numeric()->label("Quantité ravitaillée")
+                    TextInput::make("montant_ravitailler")->numeric()->label("Montant ravitaillement")->suffix('FCFA')
                     ->visible(function(Get $get){
                         return  $get('ravitailler');
                     })
@@ -346,7 +346,7 @@ class PointageCamionResource extends Resource
                     $statistiques[$pointage->camion]['jours_travailles']++;
                 }
                 if ($pointage->ravitailler) {
-                    $statistiques[$pointage->camion]['total_ravitailler'] += $pointage->qte_ravitailler;
+                    $statistiques[$pointage->camion]['total_ravitailler'] += $pointage->montant_ravitailler;
                 }
             }
 

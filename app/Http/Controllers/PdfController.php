@@ -120,4 +120,27 @@ class PdfController extends Controller
             'facturation_exists' => $this->whatsappService->templateExists('facturation')
         ]);
     }
+
+    public function genererExportPdf()
+    {
+        // Vous devrez récupérer les données nécessaires pour votre vue ici
+        $data = [
+            'client' => (object)['designation' => 'Client Test', 'phone' => '123456789', 'email' => 'test@client.com'],
+            'location' => (object)['date_debut' => '2025-07-15', 'duree' => 10, 'camions' => [(object)['designation' => 'Camion 1'], (object)['designation' => 'Camion 2']]],
+            'statistiques' => [
+                'Camion 1' => ['jours_travailles' => 5, 'jours_restants' => 5, 'total_ravitailler' => 150],
+                'Camion 2' => ['jours_travailles' => 7, 'jours_restants' => 3, 'total_ravitailler' => 200]
+            ],
+            'records' => [
+                (object)['date' => '2025-07-15', 'camion' => 'Camion 1', 'chauffeurs' => (object)['nom' => 'Dupont', 'prenom' => 'Jean'], 'heure_sortie' => '08:00', 'heure_retour' => '17:00', 'a_travailler' => true, 'ravitailler' => true, 'qte_ravitailler' => 50],
+                (object)['date' => '2025-07-15', 'camion' => 'Camion 2', 'chauffeurs' => (object)['nom' => 'Martin', 'prenom' => 'Pierre'], 'heure_sortie' => '08:00', 'heure_retour' => '17:00', 'a_travailler' => true, 'ravitailler' => false, 'qte_ravitailler' => 0]
+            ],
+            'date' => date('d/m/Y')
+        ];
+
+        $pdf = PDF::loadView('pdf.export', $data);
+        $pdf->save(public_path('kosbora.pdf'));
+
+        return $pdf->download('kosbora.pdf');
+    }
 }

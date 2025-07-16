@@ -145,7 +145,7 @@
                     <th>Camion</th>
                     <th>Jours Travaillés</th>
                     <th>Jours Restants</th>
-                    <th>Total Ravitaillement (L)</th>
+                    <th>Total Ravitaillement (FCFA)</th>
                 </tr>
             </thead>
             <tbody>
@@ -188,7 +188,7 @@
                         </td>
                         <td>
                             @if($record->ravitailler)
-                                <span class="status-travail oui">{{ $record->qte_ravitailler }} L</span>
+                                <span class="status-travail oui">{{ $record->montant_ravitailler }} FCFA</span>
                             @else
                                 <span class="status-travail non">Non</span>
                             @endif

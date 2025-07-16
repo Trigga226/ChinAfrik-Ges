@@ -14,7 +14,7 @@ class PointageMachine extends Model
         "heure_sortie",
         "heure_retour",
         "ravitailler",
-        "qte_ravitailler",
+        "montant_ravitailler",
         "a_travailler",
         "observation",
     ];

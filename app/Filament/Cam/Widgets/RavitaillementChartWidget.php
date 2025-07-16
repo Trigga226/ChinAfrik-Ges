@@ -22,13 +22,13 @@ class RavitaillementChartWidget extends ChartWidget
 
             $data['camions'][] = PointageCamion::whereDate('date', $date)
                 ->where('ravitailler', true)
-                ->sum('qte_ravitailler');
+                ->sum('montant_ravitailler');
         }
 
         return [
             'datasets' => [
                 [
-                    'label' => 'Quantité de carburant (L)',
+                    'label' => 'Montant ravitaillement (FCFA)',
                     'data' => $data['camions'],
                     'backgroundColor' => '#3B82F6',
                 ],

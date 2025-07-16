@@ -25,7 +25,15 @@ class EditLocationMachine extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $data['total_a_percevoir'] = $data['cout_horaire'] * $data['duree']-$data['remise'];
+        $tot=0;
+        foreach ($data['details'] as $key => $value) {
+            $tot+=$value['montant'];
+        }
+
+        $tot=$tot-$data['remise'];
+
+        $data['total_a_percevoir']=$tot;
+
         return $data;
     }
 }

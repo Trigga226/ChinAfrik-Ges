@@ -22,7 +22,7 @@ class ChauffeurResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $label="Nos Chauffeurs";
 
-    protected static ?string $navigationGroup="Utilisateurs";
+
 
 
     public static function form(Form $form): Form
