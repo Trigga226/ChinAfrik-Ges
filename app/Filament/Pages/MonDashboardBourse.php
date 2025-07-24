@@ -17,7 +17,7 @@ class MonDashboardBourse extends BaseDashboard
     {
         return [
             \Filament\Actions\Action::make('switchPanel')
-                ->label('Aller a Camion')
+                ->label('Aller a Kosboura')
                 ->icon('heroicon-o-arrow-path')
                 ->color('primary')
                 ->url(function () {
