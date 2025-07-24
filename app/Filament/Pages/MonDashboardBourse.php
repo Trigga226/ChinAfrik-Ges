@@ -23,7 +23,7 @@ class MonDashboardBourse extends BaseDashboard
                 ->url(function () {
                     // Remplacez ceci par l'URL de votre autre panel
                     return '/camion';
-                })->visible(fn () => auth()->user()->hasRole('admin') || auth()->user()->hasRole('secretaire_kosboura')),
+                })->visible(fn () => auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('secretaire_kosboura')),
         ];
     }
 
