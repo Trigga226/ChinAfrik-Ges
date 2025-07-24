@@ -34,7 +34,7 @@ class MonDashboardCamion extends Dashboard
                 ->url(function () {
                     // Remplacez ceci par l'URL de votre autre panel
                     return '/admin';
-                }),
+                })->visible(fn () => auth()->user()->hasRole('super_admin')),
         ];
     }
 
