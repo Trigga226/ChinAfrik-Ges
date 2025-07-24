@@ -39,9 +39,13 @@ class PdfController extends Controller
             $coutp=$bourse->coutp;
             $totalp=$frais+$coutp;
 
-            $versement=Versement::where('dossier_id',$dossier->id)->first()->sum('montant');
+            $versement=Versement::where('dossier_id',$dossier->id)->sum('montant');
+          
             $soldet=$totalt-$versement;
             $soldep=$totalp-$versement;
+
+
+      
 
 
 
@@ -53,7 +57,7 @@ class PdfController extends Controller
                 $coutt=$bourse->coutt;
                 $totalt=$frais+$coutt;
 
-                $versement=Versement::where('dossier_id',$dossier->id)->first()->sum('montant');
+                $versement=Versement::where('dossier_id',$dossier->id)->sum('montant');
                 $soldet=$totalt-$versement;
             }else{
                 $bourse=Bourse::where('titre',$dossier->bourse)->first();
@@ -62,7 +66,7 @@ class PdfController extends Controller
                 $coutp=$bourse->coutp;
                 $totalp=$frais+$coutp;
 
-                $versement=Versement::where('dossier_id',$dossier->id)->first()->sum('montant');
+                $versement=Versement::where('dossier_id',$dossier->id)->sum('montant');
                 $soldet=$totalp-$versement;
             }
         }
@@ -80,8 +84,8 @@ class PdfController extends Controller
 
         $this->whatsappService->sendVersementConfirmationNotificationWithTemplate($phone,$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture',);
 
-        $admin=["22664166061","22670692165","8615527905630"];
-      //  $admin=["22671301755","22664575750","22664166061"];
+        $admin=["22664166061","22670692165","8615527905630","22671301755"];
+        //$admin=["22671301755"];
         foreach($admin as $a){
            // $this->whatsappService->sendVersementNotificationSimple($a,$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture');
             $this->whatsappService->sendVersementNotificationWithTemplate($a,$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture',);
