@@ -253,19 +253,23 @@ class DossierPostulantResource extends Resource
                         $frais=$bourse->frais;
                         $coutt=$bourse->coutt;
                         $total=(int)$frais+ (int)$coutt;
+                        
 
 
-                        $versement=Versement::where('dossier_id',$dossier->id)->get();
+                        $versement=Versement::where('dossier_id',$dossier->id)->get()->sum('montant');
+                        
 
 
-                        if (!$versement->isEmpty()) {
-                            foreach ($versement as $vers) {
-                                $solde=$total-$vers->montant;
-                            }
+                        if ($versement>0) {
+                            
+                            $solde=$total-$versement;
 
+                           
+                           
 
                             return $solde;
                         }else{
+                            
                            return $total;
                         }
                     }else{
@@ -291,15 +295,22 @@ class DossierPostulantResource extends Resource
 
                         if(!is_null($dossier->bourse)){
                             $bourse=Bourse::where('titre',$dossier->bourse)->first();
+                           
                             $frais=$bourse->frais;
                             $coutp=$bourse->coutp;
                             $total=(int)$frais+ (int)$coutp;
-                            $versement=Versement::where('dossier_id',$dossier->id)->get();
+                            $versement=Versement::where('dossier_id',$dossier->id)->get()->sum('montant');
+                           
 
-                            if (!$versement->isEmpty()) {
-                                foreach ($versement as $vers) {
-                                    $solde=$total-$vers->montant;
-                                }
+                        
+                           
+
+                            if ($versement>0) {
+                               
+                                    $solde=$total-$versement;
+                                
+                                
+
                                 return $solde;
                             }else{
                                 return $total;
