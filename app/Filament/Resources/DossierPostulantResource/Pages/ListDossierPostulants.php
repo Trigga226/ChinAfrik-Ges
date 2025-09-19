@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\DossierPostulantResource\Pages;
 
 use App\Filament\Resources\DossierPostulantResource;
+use App\Models\Bourse;
+use App\Models\Versement;
 use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
@@ -13,6 +15,7 @@ class ListDossierPostulants extends ListRecords
 
     protected function getHeaderActions(): array
     {
+     
         return [
             Actions\CreateAction::make()
             ->modal()
