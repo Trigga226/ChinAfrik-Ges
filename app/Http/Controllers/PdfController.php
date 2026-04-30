@@ -85,9 +85,10 @@ class PdfController extends Controller
         //$this->whatsappService->sendVersementConfirmationNotificationWithTemplate($phone,$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture',);
 
        // $admin=["22664166061","22670692165","8615527905630","22671301755"];
-        $admin=["22671301755"];
+        $admin=["22664575750","22664166061"];
         foreach($admin as $a){
            // $this->whatsappService->sendVersementNotificationSimple($a,$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture');
+           $this->whatsappService->sendWelcome($a);
             $this->whatsappService->sendVersementNotificationWithTemplate($a,$postulant->nom_complet,$paiement->motif,$paiement->montant,storage_path('app/public/recu/'.$filename),'Facture',);
         //    $whatsapp->sendWelcome($a);
         //    $whatsapp->sendFile($a,storage_path('app/public/recu/'.$filename),"Nouveau paiement de ".$paiement->montant . "de ".$postulant->nom_complet." pour ".$paiement->motif,'document',);
