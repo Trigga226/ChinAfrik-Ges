@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Versement;
 use App\Observers\UserObserver;
 use App\Services\WhatsAppService;
+use Filament\Forms\Components\FileUpload;
 use Filament\Http\Responses\Auth\Contracts\LoginResponse;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -32,6 +33,10 @@ class AppServiceProvider extends ServiceProvider
         Versement::observe(\App\Observers\Versement::class);
         Schema::defaultStringLength(191);
         $this->app->singleton(LoginResponse::class, CustomLoginResponse::class);
+
+        FileUpload::configureUsing(function (FileUpload $fileUpload): void {
+            $fileUpload->maxSize(20 * 1024); // 20 MB en kilobytes
+        });
     }
 }
 

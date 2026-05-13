@@ -78,7 +78,7 @@ return [
         | Set the maximum/minimum file size and maximum/minimum number of files that
         | can be attached to each message.
         */
-        'max_file_size' => 1048576, /** Default max file size: 5mb */
+        'max_file_size' => 10485760, /** Default max file size: 10mb */
         'min_file_size' => 0, /** Default min file size: 0mb */
         'max_files' => 10, /** Default max files: 10 */
         'min_files' => 0, /** Default min files: 0 */
